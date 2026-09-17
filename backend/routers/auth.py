@@ -1,6 +1,3 @@
-# ============================================================
-# WasteWise — Auth Router (Hashlib PBKDF2)
-# ============================================================
 import hashlib
 import os
 from datetime import datetime, timedelta

@@ -2,12 +2,21 @@
 // WasteWise — Centralized HTTP API Client
 // ============================================================
 
-const BASE_URL = ''; // Relative path, handled by Vite dev server proxy or direct /api
+// In development, Vite proxies relative /api requests to localhost:8000.
+// On Vercel, set VITE_API_URL to the public URL of the deployed backend.
+const BASE_URL = (import.meta.env.VITE_API_URL ?? '').replace(/\/$/, '');
+const IS_PRODUCTION = import.meta.env.PROD;
 
 export async function apiRequest<T>(
   endpoint: string,
   options: RequestInit = {}
 ): Promise<T> {
+  // A deployed Vite site has no development proxy. Fail clearly instead of
+  // sending requests to the frontend host's non-existent /api route (502).
+  if (IS_PRODUCTION && !BASE_URL) {
+    throw new Error('Service API is not configured. Set VITE_API_URL for this deployment.');
+  }
+
   const token = localStorage.getItem('ww-token');
 
   const headers: Record<string, string> = {

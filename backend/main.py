@@ -3,7 +3,8 @@
 # ============================================================
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
-from database import engine, Base
+from database import engine, Base, SessionLocal
+import models
 from routers import auth, waste_records, food_items, analytics, recommendations, notifications
 
 # Initialize tables
@@ -31,6 +32,21 @@ app.include_router(food_items.router)
 app.include_router(analytics.router)
 app.include_router(recommendations.router)
 app.include_router(notifications.router)
+
+
+@app.on_event("startup")
+def seed_first_deployment() -> None:
+    """Populate a brand-new database so the public demo is usable immediately."""
+    db = SessionLocal()
+    try:
+        has_users = db.query(models.User.id).first() is not None
+    finally:
+        db.close()
+
+    if not has_users:
+        # Import lazily to avoid a router/seed import cycle while the app starts.
+        from seed import seed_database
+        seed_database()
 
 
 @app.get("/")

@@ -52,6 +52,22 @@ npm install
 npm run dev                  # Runs Web App on http://localhost:5173
 ```
 
+### 3. Production Deployment
+
+The checked-in `render.yaml` deploys the FastAPI backend from `backend/` on
+Render. Create a new Render Blueprint from this GitHub repository, then copy
+the generated API URL. In Vercel, add this environment variable to the
+frontend project and redeploy:
+
+```text
+VITE_API_URL=https://your-render-api-url.onrender.com
+```
+
+The backend automatically seeds an empty database on first start, so the demo
+account and sample data are available immediately. The Vercel frontend cannot
+reach `localhost:8000` on your computer; `VITE_API_URL` is required in every
+production deployment.
+
 ---
 
 ## 🔐 Default Credentials
