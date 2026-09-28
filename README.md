@@ -54,19 +54,25 @@ npm run dev                  # Runs Web App on http://localhost:5173
 
 ### 3. Production Deployment
 
-The checked-in `render.yaml` deploys the FastAPI backend from `backend/` on
-Render. Create a new Render Blueprint from this GitHub repository, then copy
-the generated API URL. In Vercel, add this environment variable to the
-frontend project and redeploy:
+The frontend is a Vite app for Vercel; the FastAPI backend is configured as a
+Render Blueprint in `render.yaml`.
 
-```text
-VITE_API_URL=https://your-render-api-url.onrender.com
-```
+1. Push this project to GitHub.
+2. In Render, create a new Blueprint from the repository and deploy the
+   `wastewise-api` service. Copy its public URL, such as
+   `https://wastewise-api.onrender.com`.
+3. In Vercel, import the same repository. Set **Root Directory** to the
+   repository root containing this `package.json` (not `backend/`). Use the
+   Vite framework preset, `npm run build` as the build command, and `dist` as
+   the output directory.
+4. In the Vercel project's environment variables, set
+   `VITE_API_URL` to the Render service URL, with no trailing slash. Apply it
+   to Production and Preview, then redeploy.
 
-The backend automatically seeds an empty database on first start, so the demo
-account and sample data are available immediately. The Vercel frontend cannot
-reach `localhost:8000` on your computer; `VITE_API_URL` is required in every
-production deployment.
+The Vercel frontend cannot reach `localhost:8000` on your computer. The
+backend seeds an empty database with the demo account and sample data on
+startup. Once both services are live, share the Vercel deployment URL and the
+default login below with your viewer.
 
 ---
 
