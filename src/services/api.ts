@@ -3,8 +3,12 @@
 // ============================================================
 
 // In development, Vite proxies relative /api requests to localhost:8000.
-// On Vercel, set VITE_API_URL to the public URL of the deployed backend.
-const BASE_URL = (import.meta.env.VITE_API_URL ?? '').replace(/\/$/, '');
+// The hosted demo uses Render by default; VITE_API_URL can override it.
+const DEFAULT_PRODUCTION_API_URL = 'https://wastewise-api-vcdt.onrender.com';
+const BASE_URL = (
+  import.meta.env.VITE_API_URL ??
+  (import.meta.env.PROD ? DEFAULT_PRODUCTION_API_URL : '')
+).replace(/\/$/, '');
 const IS_PRODUCTION = import.meta.env.PROD;
 
 export async function apiRequest<T>(

@@ -65,9 +65,9 @@ Render Blueprint in `render.yaml`.
    repository root containing this `package.json` (not `backend/`). Use the
    Vite framework preset, `npm run build` as the build command, and `dist` as
    the output directory.
-4. In the Vercel project's environment variables, set
-   `VITE_API_URL` to the Render service URL, with no trailing slash. Apply it
-   to Production and Preview, then redeploy.
+4. The hosted demo defaults to the Render API URL above. If you deploy a
+   different backend, set `VITE_API_URL` in the Vercel project's environment
+   variables to that service URL, with no trailing slash, then redeploy.
 
 The Vercel frontend cannot reach `localhost:8000` on your computer. The
 backend seeds an empty database with the demo account and sample data on
