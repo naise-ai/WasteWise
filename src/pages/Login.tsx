@@ -111,7 +111,6 @@ export default function Login() {
       <div className="login-right">
         <div className="login-card">
           <div className="login-card-header">
-            <div style={{ fontSize: 32, marginBottom: 8 }}>👋</div>
             <h2>Welcome back</h2>
             <p>Sign in to your WasteWise account</p>
           </div>
