@@ -28,6 +28,39 @@ class UserOut(BaseModel):
     model_config = {"from_attributes": True}
 
 
+class RescueRegistration(BaseModel):
+    name: str
+    organization_name: str
+    email: str
+    password: str
+
+
+class SurplusListingCreate(BaseModel):
+    food_name: str
+    quantity: float
+    unit: str = "portions"
+    pickup_location: str
+    available_until: datetime
+    notes: Optional[str] = None
+
+
+class SurplusListingOut(BaseModel):
+    id: int
+    food_name: str
+    quantity: float
+    unit: str
+    pickup_location: str
+    available_until: datetime
+    notes: Optional[str]
+    status: str
+    posted_by_id: int
+    posted_by_name: str
+    organization_name: str
+    claimed_by_id: Optional[int]
+    claimed_by_name: Optional[str]
+    created_at: datetime
+
+
 # ─── Food Items ──────────────────────────────────────────────
 class FoodItemCreate(BaseModel):
     name: str

@@ -70,7 +70,13 @@ function appReducer(state: AppState, action: Action): AppState {
     case 'SET_LOADING':
       return { ...state, isLoading: action.payload };
     case 'LOGIN_SUCCESS':
-      return { ...state, isAuthenticated: true, user: action.payload, isLoading: false };
+      return {
+        ...state,
+        isAuthenticated: true,
+        user: action.payload,
+        isLoading: false,
+        currentPage: action.payload.role === 'Food Rescue Partner' ? 'rescue' : 'dashboard',
+      };
     case 'LOGOUT':
       return { ...state, isAuthenticated: false, user: null, wasteRecords: [], foodItems: [], notifications: [], recommendations: [] };
     case 'SET_WASTE_RECORDS':
@@ -160,10 +166,10 @@ export function AppProvider({ children }: { children: ReactNode }) {
 
   // Load data when authenticated
   useEffect(() => {
-    if (state.isAuthenticated) {
+    if (state.isAuthenticated && state.user?.role === 'Canteen Administrator') {
       refreshAllData();
     }
-  }, [state.isAuthenticated, refreshAllData]);
+  }, [state.isAuthenticated, state.user?.role, refreshAllData]);
 
   // Apply theme
   useEffect(() => {

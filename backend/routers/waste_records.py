@@ -11,6 +11,7 @@ from database import get_db
 from routers.deps import require_auth
 import models, schemas
 from utils import get_level, get_level_str
+from services.rescue_sync import sync_waste_record_to_rescue
 
 router = APIRouter(prefix="/api/records", tags=["waste_records"])
 
@@ -85,7 +86,7 @@ def list_records(
 def create_record(
     body: schemas.WasteRecordCreate,
     db: Session = Depends(get_db),
-    _user=Depends(require_auth),
+    user=Depends(require_auth),
 ):
     fi = db.query(models.FoodItem).filter(models.FoodItem.id == body.food_item_id).first()
     if not fi:
@@ -114,6 +115,8 @@ def create_record(
         cost_lost=cost_lost,
     )
     db.add(record)
+    db.flush()
+    sync_waste_record_to_rescue(db, record, user)
     db.commit()
     db.refresh(record)
     return _build_record_out(record)
@@ -124,7 +127,7 @@ def update_record(
     record_id: int,
     body: schemas.WasteRecordUpdate,
     db: Session = Depends(get_db),
-    _user=Depends(require_auth),
+    user=Depends(require_auth),
 ):
     r = db.query(models.WasteRecord).filter(models.WasteRecord.id == record_id).first()
     if not r:
@@ -149,6 +152,7 @@ def update_record(
     if fi:
         r.cost_lost = round(r.wasted * fi.cost_per_kg, 2)
 
+    sync_waste_record_to_rescue(db, r, user)
     db.commit()
     db.refresh(r)
     return _build_record_out(r)
@@ -163,5 +167,11 @@ def delete_record(
     r = db.query(models.WasteRecord).filter(models.WasteRecord.id == record_id).first()
     if not r:
         raise HTTPException(404, "Record not found")
+    listing = db.query(models.SurplusListing).filter(
+        models.SurplusListing.source_record_id == r.id,
+        models.SurplusListing.status == "Available",
+    ).first()
+    if listing:
+        listing.status = "Withdrawn"
     db.delete(r)
     db.commit()

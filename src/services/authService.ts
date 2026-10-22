@@ -37,6 +37,28 @@ export const authService = {
     return { token: res.access_token, user };
   },
 
+  async registerRescuePartner(input: {
+    name: string;
+    organization_name: string;
+    email: string;
+    password: string;
+  }): Promise<{ token: string; user: User }> {
+    const res = await apiRequest<LoginResponse>('/api/auth/register', {
+      method: 'POST',
+      body: JSON.stringify(input),
+    });
+    const user: User = {
+      id: String(res.user.id),
+      name: res.user.name,
+      email: res.user.email,
+      role: res.user.role,
+      canteenName: res.user.canteen_name,
+    };
+    localStorage.setItem('ww-token', res.access_token);
+    localStorage.setItem('ww-user', JSON.stringify(user));
+    return { token: res.access_token, user };
+  },
+
   async getCurrentUser(): Promise<User | null> {
     const token = localStorage.getItem('ww-token');
     if (!token) return null;

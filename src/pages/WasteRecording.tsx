@@ -99,7 +99,14 @@ export default function WasteRecording() {
 
       dispatch({ type: 'ADD_WASTE_RECORD_LOCAL', payload: newRecord });
       await refreshAllData(); // refresh dashboard KPIs & recommendations triggered by engine
-      showToast({ type: 'success', title: 'Record saved to Database!', message: `Waste record for ${form.foodItem} created successfully.` });
+      const sharedForRescue = form.reason === 'Overproduction' && wasted > 0 && form.date === format(new Date(), 'yyyy-MM-dd');
+      showToast({
+        type: 'success',
+        title: 'Record saved to Database!',
+        message: sharedForRescue
+          ? `${wasted} kg of ${form.foodItem} was added to the rescue board for same-day pickup.`
+          : `Waste record for ${form.foodItem} created successfully.`,
+      });
       setForm(emptyForm);
     } catch (err: any) {
       showToast({ type: 'error', title: 'Failed to save record', message: err.message });
@@ -188,6 +195,11 @@ export default function WasteRecording() {
               ))}
             </select>
             {errors.reason && <span className="form-error">{errors.reason}</span>}
+            {form.reason === 'Overproduction' && (
+              <span style={{ display: 'block', marginTop: 8, color: '#0f766e', fontSize: 12, lineHeight: 1.5 }}>
+                Any unserved surplus will appear on the Food Rescue board for same-day pickup. Only share food that has been kept safely and remains suitable to serve.
+              </span>
+            )}
           </div>
 
           {/* Notes */}

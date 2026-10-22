@@ -20,6 +20,7 @@ const pageGreetings: Record<string, { title: string; subtitle: string }> = {
   notifications: { title: 'Notifications', subtitle: 'Stay updated with alerts and insights.' },
   settings: { title: 'Settings', subtitle: 'Manage your profile and preferences.' },
   import: { title: 'Bulk Import', subtitle: 'Import multiple waste records at once via CSV.' },
+  rescue: { title: 'Food rescue board', subtitle: 'Move fresh surplus food to neighbors who can use it.' },
 };
 
 export default function Header({ onMenuClick }: HeaderProps) {
@@ -69,14 +70,14 @@ export default function Header({ onMenuClick }: HeaderProps) {
           {isDark ? <Sun size={16} /> : <Moon size={16} />}
         </button>
 
-        <button
+        {state.user?.role === 'Canteen Administrator' && <button
           className="header-icon-btn"
           onClick={() => dispatch({ type: 'SET_PAGE', payload: 'notifications' })}
           title="Notifications"
         >
           <Bell size={16} />
           {unread > 0 && <span className="notif-dot">{unread}</span>}
-        </button>
+        </button>}
 
         <div
           className="avatar"

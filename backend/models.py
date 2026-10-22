@@ -83,3 +83,20 @@ class Notification(Base):
     message = Column(Text, nullable=False)
     is_read = Column(Boolean, default=False)
     created_at = Column(DateTime, default=datetime.utcnow)
+
+
+class SurplusListing(Base):
+    __tablename__ = "surplus_listings"
+
+    id = Column(Integer, primary_key=True, index=True)
+    food_name = Column(String(120), nullable=False)
+    quantity = Column(Float, nullable=False)
+    unit = Column(String(30), nullable=False, default="portions")
+    pickup_location = Column(String(200), nullable=False)
+    available_until = Column(DateTime, nullable=False, index=True)
+    notes = Column(Text, nullable=True)
+    status = Column(String(20), nullable=False, default="Available", index=True)
+    posted_by_id = Column(Integer, ForeignKey("users.id"), nullable=False, index=True)
+    claimed_by_id = Column(Integer, ForeignKey("users.id"), nullable=True, index=True)
+    source_record_id = Column(Integer, nullable=True, index=True)
+    created_at = Column(DateTime, default=datetime.utcnow, nullable=False)

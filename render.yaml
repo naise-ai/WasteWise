@@ -2,7 +2,7 @@ services:
   - type: web
     name: wastewise-api
     runtime: python
-    plan: free
+    plan: starter
     rootDir: backend
     buildCommand: pip install -r requirements.txt
     startCommand: python -m uvicorn main:app --host 0.0.0.0 --port $PORT
@@ -10,3 +10,20 @@ services:
     envVars:
       - key: PYTHON_VERSION
         value: 3.12.8
+      - key: WASTEWISE_ENV
+        value: production
+      - key: DATABASE_URL
+        fromDatabase:
+          name: wastewise-db
+          property: connectionString
+      - key: JWT_SECRET_KEY
+        generateValue: true
+      - key: WASTEWISE_BOOTSTRAP_EMAIL
+        sync: false
+      - key: WASTEWISE_BOOTSTRAP_PASSWORD
+        sync: false
+databases:
+  - name: wastewise-db
+    databaseName: wastewise
+    user: wastewise
+    plan: basic-256mb

@@ -17,6 +17,7 @@ import Reports from './pages/Reports';
 import Notifications from './pages/Notifications';
 import Settings from './pages/Settings';
 import BulkImport from './pages/BulkImport';
+import FoodRescue from './pages/FoodRescue';
 import './styles/globals.css';
 import './styles/layout.css';
 import './styles/login.css';
@@ -147,6 +148,7 @@ function AppContent() {
     notifications: <Notifications />,
     settings: <Settings />,
     import: <BulkImport />,
+    rescue: <FoodRescue />,
   };
 
   return (

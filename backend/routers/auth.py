@@ -1,5 +1,6 @@
 import hashlib
 import os
+import secrets
 from datetime import datetime, timedelta
 from typing import Optional
 from fastapi import APIRouter, Depends, HTTPException, status
@@ -12,7 +13,7 @@ import schemas
 
 router = APIRouter(prefix="/api/auth", tags=["auth"])
 
-SECRET_KEY = "wastewise-secret-key-2024-nit-canteen"
+SECRET_KEY = os.getenv("JWT_SECRET_KEY") or secrets.token_urlsafe(64)
 ALGORITHM = "HS256"
 ACCESS_TOKEN_EXPIRE_HOURS = 24
 
@@ -62,7 +63,7 @@ def get_current_user(token: str, db: Session) -> models.User:
 @router.post("/login", response_model=schemas.TokenResponse)
 def login(req: schemas.LoginRequest, db: Session = Depends(get_db)):
     user = db.query(models.User).filter(
-        models.User.email == req.email
+        models.User.email == req.email.strip().lower()
     ).first()
 
     if not user or not verify_password(req.password, user.hashed_password):
@@ -71,6 +72,35 @@ def login(req: schemas.LoginRequest, db: Session = Depends(get_db)):
             detail="Invalid email or password"
         )
 
+    token = create_access_token({"sub": str(user.id)})
+    return schemas.TokenResponse(
+        access_token=token,
+        user=schemas.UserOut.model_validate(user)
+    )
+
+
+@router.post("/register", response_model=schemas.TokenResponse, status_code=201)
+def register(req: schemas.RescueRegistration, db: Session = Depends(get_db)):
+    name = req.name.strip()
+    organization_name = req.organization_name.strip()
+    email = req.email.strip().lower()
+    if not name or not organization_name:
+        raise HTTPException(status_code=400, detail="Name and organization are required")
+    if len(req.password) < 8:
+        raise HTTPException(status_code=400, detail="Password must be at least 8 characters")
+    if db.query(models.User).filter(models.User.email == email).first():
+        raise HTTPException(status_code=409, detail="An account with this email already exists")
+
+    user = models.User(
+        name=name,
+        email=email,
+        hashed_password=hash_password(req.password),
+        role="Food Rescue Partner",
+        canteen_name=organization_name,
+    )
+    db.add(user)
+    db.commit()
+    db.refresh(user)
     token = create_access_token({"sub": str(user.id)})
     return schemas.TokenResponse(
         access_token=token,

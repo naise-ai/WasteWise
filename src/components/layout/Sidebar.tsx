@@ -6,6 +6,7 @@ import {
   LayoutDashboard, PlusCircle, FileText, BarChart3,
   Lightbulb, UtensilsCrossed, FileBarChart2, Bell,
   Settings, LogOut, Leaf, Upload,
+  HandHeart,
 } from 'lucide-react';
 import { useApp } from '../../context/AppContext';
 // styles imported globally via App.tsx
@@ -41,12 +42,23 @@ export default function Sidebar({ mobileOpen, onClose }: SidebarProps) {
     { id: 'settings', label: 'Settings', icon: <Settings size={18} />, section: 'ACCOUNT' },
   ];
 
+  const partnerItems: NavItem[] = [
+    { id: 'rescue', label: 'Food rescue board', icon: <HandHeart size={18} />, section: 'RESCUE' },
+    { id: 'settings', label: 'Organization', icon: <Settings size={18} />, section: 'ACCOUNT' },
+  ];
+  const visibleItems: NavItem[] = user?.role === 'Food Rescue Partner' ? partnerItems : [
+    { id: 'rescue', label: 'Share surplus food', icon: <HandHeart size={18} />, section: 'COMMUNITY' },
+    ...navItems,
+  ];
+
   const navigate = (id: string) => {
     dispatch({ type: 'SET_PAGE', payload: id });
     onClose();
   };
 
-  const sections = ['MAIN', 'INSIGHTS', 'MANAGE', 'ACCOUNT'];
+  const sections = user?.role === 'Food Rescue Partner'
+    ? ['RESCUE', 'ACCOUNT']
+    : ['MAIN', 'INSIGHTS', 'COMMUNITY', 'MANAGE', 'ACCOUNT'];
 
   const initials = user?.name.split(' ').map(n => n[0]).join('').slice(0, 2) || 'AD';
 
@@ -68,7 +80,7 @@ export default function Sidebar({ mobileOpen, onClose }: SidebarProps) {
         {/* Navigation */}
         <nav className="sidebar-nav">
           {sections.map(section => {
-            const items = navItems.filter(item => item.section === section);
+            const items = visibleItems.filter(item => item.section === section);
             return (
               <div key={section}>
                 <div className="nav-section-label">{section}</div>

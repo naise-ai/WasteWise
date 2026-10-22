@@ -9,6 +9,7 @@
 - 📊 **Real-time Analytics Dashboard** — Dynamic KPIs, area charts for waste trends, category breakdowns, and meal-wise waste metrics.
 - 🎯 **Monthly Goals & Targets** — Progress tracking for waste percentage targets, daily cost loss limits, and reduction goals.
 - 📝 **Daily Waste Logging** — Easy meal-wise food waste recording with automated cost calculation and severity classification (`Low`, `Moderate`, `High`, `Critical`).
+- 🤝 **Food Rescue Network** — Canteens post safe surplus with pickup deadlines; registered NGOs and community partners reserve and confirm collections.
 - 📁 **Bulk CSV Import** — Drag-and-drop CSV parser with schema validation, error highlighting, and batch database import.
 - 📄 **Branded PDF & CSV Reports** — Generate and export reports with custom date ranges, meal filters, charts, and key advisories.
 - 💡 **Rule-Based Recommendation Engine** — Automated pattern analysis detecting overproduction, spoilage trends, and cost recovery opportunities.
@@ -30,9 +31,13 @@
 ### Backend
 - **Framework**: Python FastAPI
 - **Server**: Uvicorn ASGI
-- **Database**: SQLite with SQLAlchemy ORM
+- **Database**: PostgreSQL in production; SQLite for local development
 - **Authentication**: JWT Bearer Tokens with Bcrypt password hashing
 - **Recommendation System**: Heuristic Rule Engine
+
+### App packaging
+- **Android**: Capacitor wrapper around the existing Vite/React app
+- **Windows**: Electron desktop app packaged as a Windows NSIS installer
 
 ---
 
@@ -52,36 +57,102 @@ npm install
 npm run dev                  # Runs Web App on http://localhost:5173
 ```
 
-### 3. Production Deployment
+### 3. Hosted backend and web deployment
 
-The frontend is a Vite app for Vercel; the FastAPI backend is configured as a
-Render Blueprint in `render.yaml`.
+The FastAPI backend and persistent PostgreSQL database are configured together
+in the Render Blueprint `render.yaml`. It uses paid Render plans (Starter web
+service and Basic PostgreSQL) so production data is stored in a managed
+database rather than ephemeral service storage.
 
-1. Push this project to GitHub.
-2. In Render, create a new Blueprint from the repository and deploy the
-   `wastewise-api` service. Copy its public URL, such as
-   `https://wastewise-api.onrender.com`.
-3. In Vercel, import the same repository. Set **Root Directory** to the
-   repository root containing this `package.json` (not `backend/`). Use the
-   Vite framework preset, `npm run build` as the build command, and `dist` as
-   the output directory.
-4. The hosted demo defaults to the Render API URL above. If you deploy a
-   different backend, set `VITE_API_URL` in the Vercel project's environment
-   variables to that service URL, with no trailing slash, then redeploy.
+1. Push the repository to GitHub and create a Render Blueprint from it.
+2. In Render's protected environment-variable setup, configure
+   `WASTEWISE_BOOTSTRAP_EMAIL` and `WASTEWISE_BOOTSTRAP_PASSWORD` for the first
+   administrator. Use your own account email and a unique password of at least
+   12 characters. Optionally set `WASTEWISE_BOOTSTRAP_NAME` and
+   `WASTEWISE_BOOTSTRAP_CANTEEN`. Do not put these values in Git, the frontend,
+   or a public issue. Render generates `JWT_SECRET_KEY`; `DATABASE_URL` is
+   supplied by the Blueprint from the managed PostgreSQL database.
+3. Deploy `wastewise-api` and copy its public Render URL (for example,
+   `https://wastewise-api.onrender.com`).
+4. For the hosted web UI, import the repository into Vercel with the repository
+   root (the directory containing this `package.json`) as **Root Directory**,
+   `npm run build` as the build command, and `dist` as the output directory.
+   Set `VITE_API_URL` to the Render URL with no trailing slash, then redeploy.
 
-The Vercel frontend cannot reach `localhost:8000` on your computer. The
-backend seeds an empty database with the demo account and sample data on
-startup. Once both services are live, share the Vercel deployment URL and the
-default login below with your viewer.
+The API is reachable over HTTPS by the web frontend and installed apps, so
+users can sign in from different devices. Production startup creates only the
+explicitly configured administrator; it does not seed the demo account or
+sample records. Local development retains the demo seed described below.
+
+### 4. Install the phone app (no APK required)
+
+The frontend is also an installable Progressive Web App (PWA). After deploying
+the frontend to an HTTPS URL and configuring it to use the hosted API, open that
+URL in Chrome on Android, sign in, then select **Install app** from the browser
+menu (or **Add to Home screen**). WasteWise will appear on the phone like an
+app and open without the browser address bar. The frontend shell can open
+offline after a first visit; API features still require an internet connection.
+
+For a quick local UI preview on your phone, the laptop and phone must be on the
+same Wi-Fi and Vite must be started with `npm run dev -- --host 0.0.0.0`.
+However, phone installation and backend access from anywhere require the HTTPS
+deployment described above; `localhost` on the phone refers to the phone itself.
+
+### 5. Android app (native APK)
+
+Install Node.js/npm and Android Studio with an Android SDK. From the repository
+root in PowerShell:
+
+```powershell
+npm ci
+$env:VITE_API_URL = "https://your-wastewise-api.onrender.com"
+npm run android:init       # First time only: builds the UI and creates android/
+npm run android:sync       # Repeat after UI/config changes
+npm run android:open       # Opens the native project in Android Studio
+```
+
+In Android Studio, allow Gradle sync to finish, select an emulator/device, and
+run the app. To make an installable APK, use **Build > Build Bundle(s) / APK(s)
+> Build APK(s)**. Android Studio will show the APK location. The app packages
+the built UI and connects to the hosted backend; the phone does not need to run
+the API locally.
+
+### 6. Windows desktop installer
+
+On Windows, from the repository root:
+
+```powershell
+npm ci
+$env:VITE_API_URL = "https://your-wastewise-api.onrender.com"
+npm run desktop:package
+```
+
+The script builds the UI and creates an NSIS installer under `release/`.
+Run the generated `WasteWise Setup *.exe` to install it.
+`npm run desktop:dev` builds and launches the desktop app without packaging an
+installer.
 
 ---
 
-## 🔐 Default Credentials
+## 🔐 Local demo credentials
 
 | Field | Value |
 |---|---|
 | **Email** | `naise.shekhar@vsit.edu.in` |
 | **Password** | `admin@123` |
+
+Food rescue partner demo:
+
+| Field | Value |
+|---|---|
+| **Email** | `rescue@wastewise.org` |
+| **Password** | `rescue@123` |
+
+Rescue partners can also create an organization account from the Rescue Partner sign-in tab.
+
+These credentials are for local development/demo use only. They are not
+provisioned in a Render production deployment. Configure production account
+credentials through Render's protected environment-variable settings above.
 
 ---
 

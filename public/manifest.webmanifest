@@ -1,0 +1,20 @@
+{
+  "id": "/",
+  "name": "WasteWise — Canteen Food Waste Management",
+  "short_name": "WasteWise",
+  "description": "Track canteen food waste, review analytics, and get recommendations to reduce waste.",
+  "start_url": "/",
+  "scope": "/",
+  "display": "standalone",
+  "orientation": "any",
+  "background_color": "#f7faf7",
+  "theme_color": "#16a34a",
+  "icons": [
+    {
+      "src": "/wastewise-icon.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "any maskable"
+    }
+  ]
+}

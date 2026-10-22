@@ -1,11 +1,12 @@
 # ============================================================
 # WasteWise Backend — Database Seeder
 # ============================================================
-from datetime import date, timedelta, datetime
+from datetime import date, timedelta, datetime, time
 from database import SessionLocal, engine, Base
 import models
 from routers.auth import hash_password
 from services.recommendation_engine import RuleBasedRecommendationEngine
+from services.rescue_sync import sync_waste_record_to_rescue
 
 def seed_database():
     Base.metadata.create_all(bind=engine)
@@ -197,6 +198,107 @@ def seed_database():
     RuleBasedRecommendationEngine.generate_recommendations(db)
 
     print("Seeding complete! Database is populated.")
+
+
+def ensure_demo_history(days: int = 30) -> int:
+    """Fill missing demo dates through today, preserving all existing records."""
+    Base.metadata.create_all(bind=engine)
+    db = SessionLocal()
+    added = 0
+    try:
+        canteen = db.query(models.User).filter(
+            models.User.email == "naise.shekhar@vsit.edu.in"
+        ).first()
+        if canteen is None:
+            return 0
+
+        catalog = [
+            ("Rice", "Rice & Grains", 60.0),
+            ("Dal Tadka", "Dal & Lentils", 80.0),
+            ("Chapati", "Breads", 50.0),
+            ("Mixed Vegetable", "Vegetables", 70.0),
+            ("Paneer Curry", "Curry", 180.0),
+            ("Biryani", "Rice & Grains", 120.0),
+            ("Poha", "Rice & Grains", 45.0),
+            ("Idli", "Rice & Grains", 40.0),
+            ("Samosa", "Snacks", 90.0),
+            ("Vada Pav", "Snacks", 75.0),
+            ("Pulao", "Rice & Grains", 90.0),
+            ("Upma", "Rice & Grains", 40.0),
+            ("Rajma", "Dal & Lentils", 85.0),
+            ("Chole", "Dal & Lentils", 90.0),
+            ("Khichdi", "Rice & Grains", 55.0),
+        ]
+        items = {item.name: item for item in db.query(models.FoodItem).all()}
+        for name, category, cost in catalog:
+            if name not in items:
+                item = models.FoodItem(name=name, category=category, cost_per_kg=cost)
+                db.add(item)
+                db.flush()
+                items[name] = item
+
+        today = date.today()
+        daily_extras = [
+            ("Dal Tadka", "Lunch", "Overproduction"),
+            ("Poha", "Breakfast", "Low demand"),
+            ("Biryani", "Dinner", "Overproduction"),
+            ("Mixed Vegetable", "Lunch", "Low demand"),
+            ("Upma", "Breakfast", "Overproduction"),
+            ("Rajma", "Lunch", "Low demand"),
+        ]
+        for days_ago in reversed(range(days)):
+            record_date = today - timedelta(days=days_ago)
+            extra_name, extra_meal, extra_reason = daily_extras[days_ago % len(daily_extras)]
+            planned = [
+                ("Rice", "Lunch", "Overproduction", "Lunch service surplus"),
+                (extra_name, extra_meal, extra_reason, "Daily demo service observation"),
+            ]
+            for slot, (food_name, meal, reason, note) in enumerate(planned):
+                existing = db.query(models.WasteRecord.id).filter(
+                    models.WasteRecord.date == record_date,
+                    models.WasteRecord.meal == meal,
+                    models.WasteRecord.food_item_name == food_name,
+                ).first()
+                if existing:
+                    continue
+
+                item = items[food_name]
+                prepared = float(46 + ((days_ago * 7 + slot * 3) % 18))
+                waste_amount = float(4 + ((days_ago * 5 + slot * 2) % 8))
+                consumed = round(prepared - waste_amount, 3)
+                actual_wasted = round(prepared - consumed, 3)
+                percentage = round(actual_wasted / prepared * 100, 1)
+                level = "Low" if percentage < 10 else "Moderate" if percentage < 20 else "High" if percentage < 35 else "Critical"
+                db.add(models.WasteRecord(
+                    date=record_date,
+                    meal=meal,
+                    food_item_id=item.id,
+                    food_item_name=food_name,
+                    prepared=prepared,
+                    consumed=consumed,
+                    wasted=actual_wasted,
+                    waste_percentage=percentage,
+                    students_served=240 + (days_ago * 13 % 180),
+                    reason=reason,
+                    notes=f"Demo data: {note}",
+                    level=level,
+                    cost_lost=round(actual_wasted * item.cost_per_kg, 2),
+                    created_at=datetime.combine(record_date, time(hour=12)),
+                ))
+                added += 1
+
+        db.flush()
+        for record in db.query(models.WasteRecord).filter(
+            models.WasteRecord.reason == "Overproduction",
+            models.WasteRecord.date >= today - timedelta(days=days - 1),
+            models.WasteRecord.date <= today,
+        ).all():
+            sync_waste_record_to_rescue(db, record, canteen)
+        db.commit()
+        print(f"Demo history current through {today}: added {added} records.")
+        return added
+    finally:
+        db.close()
 
 if __name__ == "__main__":
     seed_database()
