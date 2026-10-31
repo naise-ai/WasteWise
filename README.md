@@ -93,10 +93,19 @@ menu (or **Add to Home screen**). WasteWise will appear on the phone like an
 app and open without the browser address bar. The frontend shell can open
 offline after a first visit; API features still require an internet connection.
 
-For a quick local UI preview on your phone, the laptop and phone must be on the
-same Wi-Fi and Vite must be started with `npm run dev -- --host 0.0.0.0`.
-However, phone installation and backend access from anywhere require the HTTPS
-deployment described above; `localhost` on the phone refers to the phone itself.
+For a quick local preview on your phone, connect the laptop and phone to the
+same Wi-Fi and run `npm run dev:lan` from the repository root. Open
+`http://<laptop-ip>:5173` on the phone; find the laptop IP with `ipconfig` on
+Windows. Keep the Vite terminal open. API requests are proxied by Vite to the
+local backend on port 8000, so start that service too.
+
+To install the PWA on the laptop during development, open `http://localhost:5173`
+in Chrome or Edge and use the browser's **Install app** option. The service
+worker is enabled on secure contexts such as localhost. A phone can preview the
+LAN address over HTTP, but browsers do not allow PWA installation or service
+workers from an ordinary `http://<laptop-ip>` address. To install it on the
+phone, deploy the frontend to an HTTPS URL as described above, then open that
+URL on the phone and choose **Install app** or **Add to Home screen**.
 
 ### 5. Android app (native APK)
 
